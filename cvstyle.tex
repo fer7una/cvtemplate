@@ -1,0 +1,327 @@
+﻿% cvstyle.tex
+\usepackage[a4paper,margin=1.4cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+
+\usepackage[hidelinks]{hyperref}
+\usepackage{xurl}
+\urlstyle{same}
+
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{expl3}
+\usepackage{xparse}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\setlength{\emergencystretch}{2em}
+
+\setlist[itemize]{noitemsep, topsep=2pt, leftmargin=1.2em}
+
+\definecolor{cv-accent}{HTML}{1D3E5F}
+\definecolor{cv-rule}{HTML}{A9B6C1}
+
+\newcommand{\CVRule}{\vspace{4pt}\color{cv-rule}\hrule\color{black}\vspace{6pt}}
+\NewDocumentCommand{\CVSection}{m}{%
+  \vspace{9pt}%
+  {\large\bfseries\color{cv-accent} #1}\par
+  \CVRule
+}
+
+\ExplSyntaxOn
+
+% ---------- Header fields ----------
+\tl_new:N \g_cv_name_tl
+\tl_new:N \g_cv_location_tl
+\tl_new:N \g_cv_email_tl
+\tl_new:N \g_cv_phone_tl
+\tl_new:N \g_cv_linkedin_tl
+\tl_new:N \g_cv_github_tl
+\tl_new:N \g_cv_tagline_tl
+
+\NewDocumentCommand{\CVSetName}{m}{\tl_gset:Nn \g_cv_name_tl {#1}}
+\NewDocumentCommand{\CVSetLocation}{m}{\tl_gset:Nn \g_cv_location_tl {#1}}
+\NewDocumentCommand{\CVSetEmail}{m}{\tl_gset:Nn \g_cv_email_tl {#1}}
+\NewDocumentCommand{\CVSetPhone}{m}{\tl_gset:Nn \g_cv_phone_tl {#1}}
+\NewDocumentCommand{\CVSetLinkedIn}{m}{\tl_gset:Nn \g_cv_linkedin_tl {#1}}
+\NewDocumentCommand{\CVSetGitHub}{m}{\tl_gset:Nn \g_cv_github_tl {#1}}
+\NewDocumentCommand{\CVSetTagline}{m}{\tl_gset:Nn \g_cv_tagline_tl {#1}}
+
+% ---------- Section titles ----------
+\tl_new:N \g_cv_section_experience_tl
+\tl_new:N \g_cv_section_highlights_tl
+\tl_new:N \g_cv_section_education_tl
+\tl_new:N \g_cv_section_languages_tl
+\tl_new:N \g_cv_section_softskills_tl
+\tl_new:N \g_cv_section_techskills_tl
+
+\tl_gset:Nn \g_cv_section_experience_tl {Experience}
+\tl_gset:Nn \g_cv_section_highlights_tl {Generative AI for Business Transformation}
+\tl_gset:Nn \g_cv_section_education_tl {Education}
+\tl_gset:Nn \g_cv_section_languages_tl {Languages}
+\tl_gset:Nn \g_cv_section_softskills_tl {Soft Skills}
+\tl_gset:Nn \g_cv_section_techskills_tl {Technical Skills}
+
+\NewDocumentCommand{\CVSetExperienceSectionTitle}{m}{\tl_gset:Nn \g_cv_section_experience_tl {#1}}
+\NewDocumentCommand{\CVSetHighlightsSectionTitle}{m}{\tl_gset:Nn \g_cv_section_highlights_tl {#1}}
+\NewDocumentCommand{\CVSetEducationSectionTitle}{m}{\tl_gset:Nn \g_cv_section_education_tl {#1}}
+\NewDocumentCommand{\CVSetLanguagesSectionTitle}{m}{\tl_gset:Nn \g_cv_section_languages_tl {#1}}
+\NewDocumentCommand{\CVSetSoftSkillsSectionTitle}{m}{\tl_gset:Nn \g_cv_section_softskills_tl {#1}}
+\NewDocumentCommand{\CVSetTechnicalSkillsSectionTitle}{m}{\tl_gset:Nn \g_cv_section_techskills_tl {#1}}
+
+% ---------- Data stores ----------
+\seq_new:N \g_cv_experience_seq
+\seq_new:N \g_cv_education_seq
+\seq_new:N \g_cv_highlights_seq
+\seq_new:N \g_cv_languages_seq
+\seq_new:N \g_cv_softskills_seq
+\seq_new:N \g_cv_techskills_seq
+\seq_new:N \g_cv_custom_sections_seq
+
+% ---------- Entry adders ----------
+\NewDocumentCommand{\CVAddExperience}{m m m m m}{%
+  \seq_gput_right:Nn \g_cv_experience_seq
+  { \cv_experience_entry:nnnnn {#1}{#2}{#3}{#4}{#5} }
+}
+
+\NewDocumentCommand{\CVAddEducation}{m m m m m}{%
+  \seq_gput_right:Nn \g_cv_education_seq
+  { \cv_education_entry:nnnnn {#1}{#2}{#3}{#4}{#5} }
+}
+
+\cs_new_protected:Npn \cv_render_bar_list:n #1
+{
+  \seq_set_split:Nnn \l_tmpa_seq {|} {#1}
+  \seq_map_inline:Nn \l_tmpa_seq
+    {
+      \tl_set:Nn \l_tmpa_tl {##1}
+      \tl_trim_spaces:N \l_tmpa_tl
+      \tl_if_blank:nF { \tl_use:N \l_tmpa_tl } { \item \tl_use:N \l_tmpa_tl }
+    }
+}
+
+\NewDocumentCommand{\CVAddExperienceSimple}{m m m m m}{%
+  \tl_if_blank:nTF {#5}
+    { \CVAddExperience{#1}{#2}{#3}{#4}{} }
+    { \CVAddExperience{#1}{#2}{#3}{#4}{\cv_render_bar_list:n {#5}} }
+}
+
+\NewDocumentCommand{\CVAddEducationSimple}{m m m m m}{%
+  \tl_if_blank:nTF {#5}
+    { \CVAddEducation{#1}{#2}{#3}{#4}{} }
+    { \CVAddEducation{#1}{#2}{#3}{#4}{\cv_render_bar_list:n {#5}} }
+}
+
+\NewDocumentCommand{\CVSimpleList}{m}{%
+  \begin{itemize}
+    \cv_render_bar_list:n {#1}
+  \end{itemize}
+}
+
+\NewDocumentCommand{\CVAddHighlight}{m}{%
+  \seq_gput_right:Nn \g_cv_highlights_seq { \item #1 }
+}
+
+\NewDocumentCommand{\CVAddLanguage}{m m}{%
+  \seq_gput_right:Nn \g_cv_languages_seq { \textbf{#1} -- #2 }
+}
+
+\NewDocumentCommand{\CVAddSoftSkill}{m}{%
+  \seq_gput_right:Nn \g_cv_softskills_seq {#1}
+}
+
+\NewDocumentCommand{\CVAddTechnicalSkill}{m}{%
+  \seq_gput_right:Nn \g_cv_techskills_seq {#1}
+}
+
+% Backward compatibility with comma-separated setters.
+\NewDocumentCommand{\CVSetSoftSkills}{m}{%
+  \seq_gclear:N \g_cv_softskills_seq
+  \clist_map_inline:nn {#1} { \seq_gput_right:Nn \g_cv_softskills_seq {##1} }
+}
+
+\NewDocumentCommand{\CVSetTechnicalSkills}{m}{%
+  \seq_gclear:N \g_cv_techskills_seq
+  \clist_map_inline:nn {#1} { \seq_gput_right:Nn \g_cv_techskills_seq {##1} }
+}
+
+\cs_new_protected:Npn \cv_custom_section_entry:nn #1#2
+{
+  \CVSection{#1}
+  #2
+}
+
+\NewDocumentCommand{\CVAddCustomSection}{m m}{%
+  \seq_gput_right:Nn \g_cv_custom_sections_seq
+  { \cv_custom_section_entry:nn {#1}{#2} }
+}
+
+% ---------- Header rendering ----------
+\bool_new:N \l_cv_contact_started_bool
+
+\cs_new_protected:Npn \cv_contact_start_line:
+{
+  \bool_set_false:N \l_cv_contact_started_bool
+}
+
+\cs_new_protected:Npn \cv_contact_item:n #1
+{
+  \bool_if:NT \l_cv_contact_started_bool { \enspace\textbar\enspace }
+  \bool_set_true:N \l_cv_contact_started_bool
+  #1
+}
+
+\cs_new_protected:Npn \CVPrintHeader
+{
+  \begin{center}
+    {\LARGE\bfseries \tl_use:N \g_cv_name_tl}\par
+    \tl_if_blank:nF { \tl_use:N \g_cv_tagline_tl }
+      {
+        \vspace{2pt}
+        {\small \tl_use:N \g_cv_tagline_tl}\par
+      }
+
+    \vspace{4pt}
+    \begin{minipage}{0.98\linewidth}
+      \centering
+      \small
+      \sloppy
+
+      \cv_contact_start_line:
+      \tl_if_blank:nF { \tl_use:N \g_cv_location_tl }
+        { \cv_contact_item:n { \tl_use:N \g_cv_location_tl } }
+      \tl_if_blank:nF { \tl_use:N \g_cv_phone_tl }
+        { \cv_contact_item:n { \tl_use:N \g_cv_phone_tl } }
+      \tl_if_blank:nF { \tl_use:N \g_cv_email_tl }
+        { \cv_contact_item:n { \href{mailto:\tl_use:N \g_cv_email_tl}{\nolinkurl{\tl_use:N \g_cv_email_tl}} } }
+      \par
+
+      \vspace{1pt}
+      \cv_contact_start_line:
+      \tl_if_blank:nF { \tl_use:N \g_cv_linkedin_tl }
+        { \cv_contact_item:n { \href{\tl_use:N \g_cv_linkedin_tl}{LinkedIn} } }
+      \tl_if_blank:nF { \tl_use:N \g_cv_github_tl }
+        { \cv_contact_item:n { \href{\tl_use:N \g_cv_github_tl}{GitHub} } }
+      \par
+    \end{minipage}
+  \end{center}
+}
+
+% ---------- Entry formatting ----------
+\cs_new_protected:Npn \cv_experience_entry:nnnnn #1#2#3#4#5
+{
+  \textbf{#1}\hfill{\small #2}\par
+  \textit{#3}\hfill{\small #4}\par
+  \tl_if_blank:nF {#5}
+    {
+      \begin{itemize}
+        #5
+      \end{itemize}
+    }
+}
+
+\cs_new_protected:Npn \cv_education_entry:nnnnn #1#2#3#4#5
+{
+  \tl_if_blank:nTF {#4}
+    {
+      \textbf{#1}\par
+      \textit{#2}%
+      \tl_if_blank:nF {#3} { \ -- {#3} }%
+      \par
+    }
+    {
+      \noindent
+      \begin{minipage}[t]{0.76\linewidth}
+        \raggedright
+        \textbf{#1}\par
+        \textit{#2}%
+        \tl_if_blank:nF {#3} { \ -- {#3} }%
+        \par
+      \end{minipage}\hfill
+      \begin{minipage}[t]{0.22\linewidth}
+        \raggedleft
+        {\small #4}\par
+      \end{minipage}\par
+    }
+
+  \tl_if_blank:nF {#5}
+    {
+      \begin{itemize}
+        #5
+      \end{itemize}
+    }
+}
+
+% ---------- Section printers ----------
+\cs_new_protected:Npn \CVPrintExperienceSection
+{
+  \seq_if_empty:NF \g_cv_experience_seq
+    {
+      \CVSection{\tl_use:N \g_cv_section_experience_tl}
+      \seq_use:Nn \g_cv_experience_seq { \vspace{4pt} }
+    }
+}
+
+\cs_new_protected:Npn \CVPrintHighlightsSection
+{
+  \seq_if_empty:NF \g_cv_highlights_seq
+    {
+      \CVSection{\tl_use:N \g_cv_section_highlights_tl}
+      \begin{itemize}
+        \seq_use:Nn \g_cv_highlights_seq {}
+      \end{itemize}
+    }
+}
+
+\cs_new_protected:Npn \CVPrintEducationSection
+{
+  \seq_if_empty:NF \g_cv_education_seq
+    {
+      \CVSection{\tl_use:N \g_cv_section_education_tl}
+      \seq_use:Nn \g_cv_education_seq { \vspace{2pt} }
+    }
+}
+
+\cs_new_protected:Npn \CVPrintLanguagesSection
+{
+  \seq_if_empty:NF \g_cv_languages_seq
+    {
+      \CVSection{\tl_use:N \g_cv_section_languages_tl}
+      \begin{itemize}
+        \seq_map_inline:Nn \g_cv_languages_seq { \item ##1 }
+      \end{itemize}
+    }
+}
+
+\cs_new_protected:Npn \cv_print_inline_seq:N #1
+{
+  {\small\raggedright
+  \seq_use:Nn #1 { \enspace\textbullet\enspace }\par}
+  \par
+}
+
+\cs_new_protected:Npn \CVPrintSoftSkillsSection
+{
+  \seq_if_empty:NF \g_cv_softskills_seq
+    {
+      \CVSection{\tl_use:N \g_cv_section_softskills_tl}
+      \cv_print_inline_seq:N \g_cv_softskills_seq
+    }
+}
+
+\cs_new_protected:Npn \CVPrintTechnicalSkillsSection
+{
+  \seq_if_empty:NF \g_cv_techskills_seq
+    {
+      \CVSection{\tl_use:N \g_cv_section_techskills_tl}
+      \cv_print_inline_seq:N \g_cv_techskills_seq
+    }
+}
+
+\cs_new_protected:Npn \CVPrintCustomSections
+{
+  \seq_map_inline:Nn \g_cv_custom_sections_seq { ##1 }
+}
+
+\ExplSyntaxOff
